@@ -112,18 +112,11 @@ namespace Labyrinth
                     counter++;
 
 
-                    if (deadEndCount == 1)
+                    if (deadEndCount == 1 || deadEndCount == 3 || deadEndCount == 5)
                     {
                         deadEndCount++;
                     }
-                    if (deadEndCount == 3)
-                    {
-                        deadEndCount++;
-                    }
-                    if (deadEndCount == 5)
-                    {
-                        deadEndCount++;
-                    }
+                   
 
                 }
                 else
@@ -144,14 +137,11 @@ namespace Labyrinth
                             }
                         }
 
-                        if (deadEndCount == 2)
+                        if (deadEndCount == 2 || deadEndCount == 4)
                         {
                             deadEndCount++;
                         }
-                        if (deadEndCount == 4)
-                        {
-                            deadEndCount++;
-                        }
+                       
                         currentCell = backTrack.Pop();
                     }
                 }
