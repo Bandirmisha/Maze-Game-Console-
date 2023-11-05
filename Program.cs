@@ -5,7 +5,7 @@ namespace Labyrinth
     {
         static void Main()
         {
-            Field labirinth = new();
+            Game game = new Game();
         }
     }
 }

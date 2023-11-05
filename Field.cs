@@ -13,30 +13,33 @@ namespace Labyrinth
         public int[,] field;
         public int width;
         public int height;
+        Random rand;
+        Cell currentCell;
+        Cell neighbourCell;
+        Stack<Cell> backTrack;
+        public (int, int) ZombieStartPos;
+        public (int, int) SkeletonStartPos;
+        public (int, int) key;
+        public (int, int) exit;
+
         public Field() 
         {
+            rand = new Random();
+            width = rand.Next(30, 80);
+            height = rand.Next(10, 15);
+            if (width % 2 == 0) { width++; }
+            if (height % 2 == 0) { height++; }
+
+            field = new int[width, height];
+
+            currentCell = new(1, 1);
+            backTrack = new();
+
             Generate();
-            Update();
         }
 
         public void Generate()
         {
-            var rand = new Random();
-
-            width= rand.Next(80,101);
-            height = rand.Next(20, 40);
-
-            //width = 9;
-            //height = 9;
-
-            //Нужно, чтобы значения были нечетными
-            if (width % 2 == 0) { width++; }
-            if (height % 2 == 0) { height++; }
-
-            //Инициализация поля лабиринта
-            field = new int[width,height];
-            
-          
             // Заполнение
             for (int j = 0; j < height; j++)
             {
@@ -51,66 +54,54 @@ namespace Labyrinth
                 }
             }
 
-
-            //Генерация
-            List<Cell> neigbours;
-            List<Cell> visitedNeigbours = new();
-            Cell currentCell = new(1, 1);
-            Cell neighbourCell;
-            Stack<Cell> backTrack = new();
-
-            visitedNeigbours.Add(currentCell);
+            //Начальная точка посещена
+            field[1, 1] = 5;
             backTrack.Push(currentCell);
 
-            // Нахождение кол-ва всех возможных соседей
+            // Нахождение кол-ва всех непосещенных соседей
             int a = (width - 1) / 2;
             int b = (height - 1) / 2;
-            int count = a * b;
+            int count = a * b - 1;
 
-            while (true)
+            //Генерация
+            int deadEndCount = 0;
+            int counter = 0;
+            while (counter != count)
             {
                 //Нахождение соседей
-                neigbours = getNeigbours(width, height, currentCell);
+                List<Cell> neigbours = getNeigbours(width, height, currentCell);
 
                 //Удаление посещенных соседей
                 for (int i = 0; i < neigbours.Count; i++)
                 {
-                    if (visitedNeigbours.Count > 0)
+                    int x = neigbours[i].X;
+                    int y = neigbours[i].Y;
+
+                    if (field[x, y] == 5)
                     {
-                        for (int j = 0; j < visitedNeigbours.Count; j++)
-                        {
-                            if (neigbours.Count == 0)
-                                break;
-                            if (neigbours[i].X == visitedNeigbours[j].X &&
-                                    neigbours[i].Y == visitedNeigbours[j].Y)
-                            {
-                                neigbours.RemoveAt(i);
+                        neigbours.RemoveAt(i);
 
-                                if (i != 0)
-                                    i--;
-
-                            }
-                        }
+                        if(i>=0) { i--; }
                     }
-                    if (neigbours.Count == 0)
-                        break;
                 }
 
                 if (neigbours.Count > 0)
                 {
-                    //Соединение случайного соседа с текущей клеткой
+                    //Выбор случайного соседа
                     neighbourCell = neigbours[rand.Next(0, neigbours.Count)];
 
-                    if (neighbourCell.X > currentCell.X)
-                        field[neighbourCell.X - 1, currentCell.Y] = 1;
-                    else if (neighbourCell.X < currentCell.X)
-                        field[currentCell.X - 1, currentCell.Y] = 1;
-                    else if (neighbourCell.Y > currentCell.Y)
-                        field[currentCell.X, neighbourCell.Y - 1] = 1;
-                    else if (neighbourCell.Y < currentCell.Y)
-                        field[currentCell.X, currentCell.Y - 1] = 1;
+                    //Сосед отмечен посещенным
+                    field[neighbourCell.X, neighbourCell.Y] = 5;
 
-                    visitedNeigbours.Add(neighbourCell);
+                    //Соединение
+                    if (neighbourCell.X > currentCell.X)
+                        field[neighbourCell.X - 1, currentCell.Y] = 5;
+                    else if (neighbourCell.X < currentCell.X)
+                        field[currentCell.X - 1, currentCell.Y] = 5;
+                    else if (neighbourCell.Y > currentCell.Y)
+                        field[currentCell.X, neighbourCell.Y - 1] = 5;
+                    else if (neighbourCell.Y < currentCell.Y)
+                        field[currentCell.X, currentCell.Y - 1] = 5;
 
                     //Отслеживание пути следования
                     backTrack.Push(neighbourCell);
@@ -118,29 +109,59 @@ namespace Labyrinth
                     //Смещение "указателя"
                     currentCell = neighbourCell;
 
-                    
+                    counter++;
+
+
+                    if (deadEndCount == 1)
+                    {
+                        deadEndCount++;
+                    }
+                    if (deadEndCount == 3)
+                    {
+                        deadEndCount++;
+                    }
+                    if (deadEndCount == 5)
+                    {
+                        deadEndCount++;
+                    }
+
                 }
                 else
                 {
-                    if(backTrack.Count > 0)
+                    if (backTrack.Count > 0)
                     {
+                        //Создание ключа и выхода
+                        if (key == (0,0) && deadEndCount == 0)
+                        {
+                            deadEndCount++;
+                            key = (currentCell.X, currentCell.Y); //ключик
+                        }
+                        else
+                        {
+                            if (exit == (0, 0) && deadEndCount == 6)
+                            {
+                                exit = (currentCell.X, currentCell.Y); //выход
+                            }
+                        }
+
+                        if (deadEndCount == 2)
+                        {
+                            deadEndCount++;
+                        }
+                        if (deadEndCount == 4)
+                        {
+                            deadEndCount++;
+                        }
                         currentCell = backTrack.Pop();
                     }
                 }
 
-                //отслеживание currentCell в консоли
-                field[currentCell.X, currentCell.Y] = 2;
-
-                //Update();
-
-                //отслеживание currentCell в консоли
-                field[currentCell.X, currentCell.Y] = 1;
-
-
-                if (visitedNeigbours.Count == count)
-                    break;
+                if (counter > count / 6 && ZombieStartPos == (0,0))
+                    ZombieStartPos = (currentCell.X, currentCell.Y);
+                
+                if(counter > count / 3 && SkeletonStartPos == (0,0))
+                    SkeletonStartPos = (currentCell.X, currentCell.Y);
             }
-
         }
 
         private List<Cell> getNeigbours(int width, int height, Cell currCell)
@@ -168,7 +189,6 @@ namespace Labyrinth
                 else neigbours.Add(bufCell);
             }
 
-
             return neigbours;
         }
             
@@ -184,36 +204,7 @@ namespace Labyrinth
             public int Y { get; set; }
         }
        
-
-        public void Update()
-        {
-            Console.Clear();
-            for (int j = 0; j < height; j++)
-            {
-                for (int i = 0; i < width; i++)
-                {
-                    if (field[i, j] == 0)
-                    {
-                        Console.BackgroundColor = ConsoleColor.White;
-                        Console.Write(' ');
-                    }
-                    else if (field[i, j] == 1)
-                    {
-                        Console.BackgroundColor = ConsoleColor.Black;
-                        Console.Write(' ');
-                    }
-                    else if (field[i, j] == 2)
-                    {
-                        Console.BackgroundColor = ConsoleColor.Red;
-                        Console.Write(' ');
-                    }
-                }
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.Write("\n");
-            }
-        }
-
-
+        
 
     }
 }
