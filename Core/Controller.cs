@@ -18,22 +18,22 @@ namespace Labyrinth
 
         public void HandleInput(ConsoleKey key)
         {
-            if (Direction(key) == (-1, 1))
+            if (Direction(key) == new Vector2(-1, 1))
                 player.Attack();
             else
                 player.Move(Direction(key));
         }
 
-        private (int,int) Direction(ConsoleKey key)
+        private Vector2 Direction(ConsoleKey key)
         {
             return key switch
             {
-                ConsoleKey.W => (-1,0),
-                ConsoleKey.A => (0,-1),
-                ConsoleKey.S => (1, 0),
-                ConsoleKey.D => (0, 1),
-                ConsoleKey.E => (-1, 1),
-                _ => (0,0)
+                ConsoleKey.W => new Vector2(0,-1),
+                ConsoleKey.A => new Vector2(-1,0),
+                ConsoleKey.S => new Vector2(0, 1),
+                ConsoleKey.D => new Vector2(1, 0),
+                ConsoleKey.E => new Vector2(-1, 1),
+                _ => new Vector2(0,0)
             };
         }
     }

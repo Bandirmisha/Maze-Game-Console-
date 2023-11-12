@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,28 +18,37 @@ namespace Labyrinth
         Cell currentCell;
         Cell neighbourCell;
         Stack<Cell> backTrack;
-        public (int, int) ZombieStartPos;
-        public (int, int) SkeletonStartPos;
-        public (int, int) key;
-        public (int, int) exit;
+
+        public Player player;
+        public List<Zombie> zombies;
+        public List<Skeleton> skeletons;
+        public Vector2 key;
+        public Vector2 exit;
 
         public Field() 
         {
             rand = new Random();
-            width = rand.Next(30, 80);
+            width = rand.Next(25, 40);
             height = rand.Next(10, 15);
             if (width % 2 == 0) { width++; }
             if (height % 2 == 0) { height++; }
 
             field = new int[width, height];
+            key = new Vector2(0, 0);
+            exit = new Vector2(0, 0);
 
             currentCell = new(1, 1);
             backTrack = new();
 
+            player = new(this);
+            zombies = new List<Zombie>();
+            skeletons = new List<Skeleton>();
+
             Generate();
+            CreateEnemies();
         }
 
-        public void Generate()
+        private void Generate()
         {
             // Заполнение
             for (int j = 0; j < height; j++)
@@ -124,16 +134,16 @@ namespace Labyrinth
                     if (backTrack.Count > 0)
                     {
                         //Создание ключа и выхода
-                        if (key == (0,0) && deadEndCount == 0)
+                        if (key.X == 0 && key.Y == 0 && deadEndCount == 0)
                         {
                             deadEndCount++;
-                            key = (currentCell.X, currentCell.Y); //ключик
+                            key = new(currentCell.X, currentCell.Y);
                         }
                         else
                         {
-                            if (exit == (0, 0) && deadEndCount == 6)
+                            if (exit.X == 0 && exit.Y == 0 && deadEndCount == 6)
                             {
-                                exit = (currentCell.X, currentCell.Y); //выход
+                                exit = new(currentCell.X, currentCell.Y);
                             }
                         }
 
@@ -145,12 +155,11 @@ namespace Labyrinth
                         currentCell = backTrack.Pop();
                     }
                 }
+            }
 
-                if (counter > count / 6 && ZombieStartPos == (0,0))
-                    ZombieStartPos = (currentCell.X, currentCell.Y);
-                
-                if(counter > count / 3 && SkeletonStartPos == (0,0))
-                    SkeletonStartPos = (currentCell.X, currentCell.Y);
+            if (exit.X == 0 && exit.Y == 0)
+            {
+                exit = new(currentCell.X, currentCell.Y);
             }
         }
 
@@ -167,22 +176,22 @@ namespace Labyrinth
             };
 
             //Проход по всем направлениям
-            for (int i = 0; i<4 ;i++)
+            for (int i = 0; i < 4; i++)
             {
                 Cell bufCell = currCell;
 
                 bufCell.X += direction[i, 0];
                 bufCell.Y += direction[i, 1];
 
-                if(bufCell.X < 0 || bufCell.X >= width ||bufCell.Y <0 || bufCell.Y >= height)
+                if (bufCell.X < 0 || bufCell.X >= width || bufCell.Y < 0 || bufCell.Y >= height)
                 { }
                 else neigbours.Add(bufCell);
             }
 
             return neigbours;
         }
-            
-        struct Cell
+
+        private struct Cell
         {
             public Cell(int x, int y)
             {
@@ -193,8 +202,33 @@ namespace Labyrinth
             public int X { get; set; }
             public int Y { get; set; }
         }
-       
-        
+
+        private void CreateEnemies()
+        {
+            int zombieCount = rand.Next(2, 5); 
+            int skeletonCount = rand.Next(1, 3);
+
+            for (int i = 0; i < zombieCount; i++)
+            {
+                Vector2 startPos = GetEnemyStartPos();
+                zombies.Add(new Zombie(this, startPos));
+            }
+
+            for (int i = 0; i < skeletonCount; i++)
+            {
+                Vector2 startPos = GetEnemyStartPos();
+                skeletons.Add(new Skeleton(this, startPos));
+            }
+        }
+
+        private Vector2 GetEnemyStartPos()
+        {
+            Vector2 vec = new Vector2(rand.Next(1, width), rand.Next(1, height));
+            if (field[(int)vec.X, (int)vec.Y] == 0)
+                GetEnemyStartPos();
+            
+            return vec;
+        }
 
     }
 }
